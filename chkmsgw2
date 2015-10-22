@@ -1,0 +1,144 @@
+             PGM
+
+              /* Program to monitor for MSGW, written by Mark Mayer and Ronald Vetsch 20140603 */
+
+             DCLF       FILE(CHKSPOOLZ)
+
+             DCL        VAR(&STATUS)     TYPE(*CHAR) LEN(4)
+             DCL        VAR(&WAIT)       TYPE(*CHAR) LEN(4)   VALUE('MSGW')
+             DCL        VAR(&JOBNAME)    TYPE(*CHAR) LEN(10)
+             DCL        VAR(&USER)       TYPE(*CHAR) LEN(10)
+             DCL        VAR(&JOBNUMBER)  TYPE(*CHAR) LEN(6)
+             DCL        VAR(&SYSNAME)    TYPE(*CHAR) LEN(8)
+             DCL        VAR(&BATCH)      TYPE(*CHAR) LEN(5)   VALUE('BATCH')
+             DCL        VAR(&QBATCH)     TYPE(*CHAR) LEN(6)   VALUE('QBATCH')
+             DCL        VAR(&QINTER)     TYPE(*CHAR) LEN(6)   VALUE('QINTER')
+             DCL        VAR(&QINTERUHS)  TYPE(*CHAR) LEN(9)   VALUE('QINTERUHS')
+             DCL        VAR(&QSYSWRK)    TYPE(*CHAR) LEN(7)   VALUE('QSYSWRK')
+             DCL        VAR(&QUSRWRK)    TYPE(*CHAR) LEN(7)   VALUE('QUSRWRK')
+             DCL        VAR(&SBS)        TYPE(*CHAR) LEN(3)   VALUE('SBS')
+             DCL        VAR(&TYPE)       TYPE(*CHAR) LEN(3)
+             DCL        VAR(&JOBSBS)     TYPE(*CHAR) LEN(10)
+             DCL        VAR(&PRTLINE)    TYPE(*CHAR) LEN(56)
+
+             RTVNETA    SYSNAME(&SYSNAME)           /* Search for system name */
+
+              WRKACTJOB  OUTPUT(*PRINT)             /* Work active job to spool file */
+              DLTSPLF    FILE(QPDSPAJB)             /* Delete spool file */
+              DLYJOB     DLY(15)                    /* Delay 30 seconds */
+
+              WRKACTJOB  OUTPUT(*PRINT)             /* Work active job to spool file */
+
+              CPYSPLF    FILE(QPDSPAJB) TOFILE(CHKSPOOLZ)  /* Copy spool file to DB file */
+
+              RCVF
+              MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              /* Search for specific sub systems to start looking at jobs for MSGWs */
+SBSCHK:       CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for BATCH sbs */
+              IF         COND(&JOBSBS *EQ &BATCH) THEN(GOTO CMDLBL(MSGCHK))
+
+              CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for QBATCH sbs */
+              IF         COND(&JOBSBS *EQ &QBATCH) THEN(GOTO CMDLBL(MSGCHK))
+
+              CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for QINTER sbs */
+              IF         COND(&JOBSBS *EQ &QINTER) THEN(GOTO CMDLBL(MSGCHK))
+
+              CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for QINTERUHS sbs */
+              IF         COND(&JOBSBS *EQ &QINTERUHS) THEN(GOTO CMDLBL(MSGCHK))
+
+              CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for QSYSWRK sbs */
+              IF         COND(&JOBSBS *EQ &QSYSWRK) THEN(GOTO CMDLBL(MSGCHK))
+
+              CHGVAR     VAR(&JOBSBS) VALUE(%SST(&CHKSPOOLZ 2 10)) /* Check for QUSRWRK sbs */
+              IF         COND(&JOBSBS *EQ &QUSRWRK) THEN(GOTO CMDLBL(MSGCHK))
+
+              RCVF
+              MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              GOTO CMDLBL(SBSCHK)             /* Continue looking at sub systems if no match */
+
+              /* If correct sbs then look for MSGW and send message if found */
+MSGCHK:       RCVF
+              MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              CHGVAR     VAR(&TYPE) VALUE(%SST(&CHKSPOOLZ 50 3))
+              IF         COND(&TYPE *EQ &SBS) THEN(GOTO CMDLBL(SBSCHK))     /* Look for type of +
+                                              entry in splf to jump out of sbs if new sbs found */
+
+              CHGVAR     VAR(&STATUS) VALUE(%SST(&CHKSPOOLZ 116 4))
+              IF         COND(&WAIT *EQ &STATUS) THEN(GOTO CMDLBL(SENDMSG)) /* Send message if +
+                                                                             there's a MSGW */
+
+              GOTO CMDLBL(MSGCHK)      /* Continue looking for MSGW */
+
+SENDMSG:     CHGVAR     VAR(&JOBNAME) VALUE(%SST(&CHKSPOOLZ 4 10))      /* Grab name of job */
+             CHGVAR     VAR(&USER) VALUE(%SST(&CHKSPOOLZ 17 10))    /* Grab username running job */
+             CHGVAR     VAR(&JOBNUMBER) VALUE(%SST(&CHKSPOOLZ 29 6))    /* Grab job number  */
+
+             CHGVAR     VAR(&PRTLINE) VALUE(&JOBNUMBER *CAT '/' +
+                         *CAT &USER *TCAT '/' *CAT &JOBNAME)  /* Concatenate job variables */
+
+
+              /* SNDMSG     MSG('Check for MSGW for job ' *CAT &JOBNUMBER *BCAT &USER +
+              *BCAT &JOBNAME) TOMSGQ(MDMAYER01) */
+                                                                 /* Send to message queue */
+              /* MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */
+
+              /* GOTO CMDLBL(SBSCHK) */
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122467471@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('7633817665@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122465321@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)        */  /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('9527377613@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)        */  /* Global */
+
+
+
+              SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+              SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE) */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)         */ /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE) */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)         */ /* Global */
+
+
+              MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              GOTO CMDLBL(MSGCHK)                  /* Loop back into checking for MSGW */
+
+
+ENDPGM:       DLTSPLF    FILE(QPDSPAJB) /* Delete Spool file */
+              ENDPGM
+

@@ -1,0 +1,69 @@
+             /****************************************************/
+             /* PROGRAM: WSJ701                                  */
+             /* AUTHOR: JIM VAN SOEST                            */
+             /* DATE: MARCH 21, 2012                             */
+             /* DESCRIPTION:                                     */
+             /* COMMANDS TO SHUT DOWN THE PRODUCTION UHS WEBSITE */
+             /* CORRECTLY.                                       */
+             /****************************************************/
+             /* MAINTENANCE HISTORY:                             */
+             /*                                                  */
+             /****************************************************/
+             /*                                                  */
+             /* PARAMETER OPTIONS:                               */
+             /* START - START THE SERVER, SHOULD AREADY BE       */
+             /*         STOPPED                                  */
+             /* STOP  - STOP THE SERVER, SHOULD BE RUNNING       */
+             /* RSTRT - RESTART THE SERVER.  STOP IT AND THEN    */
+             /*         START IT.                                */
+             /*                                                  */
+             /****************************************************/
+             PGM        PARM(&ACTION)
+             DCL        VAR(&ACTION)  TYPE(*CHAR) LEN(5)
+             DCL        VAR(&STOPSVR) TYPE(*CHAR) LEN(200) +
+                          VALUE('/QIBM/UserData/WebSphere/AppServer/V+
+                          7/Express/profiles/UHS/bin/stopServer UHS +
+                          -profileName UHS -username wpsadmin +
+                          -password popeye10')
+             DCL        VAR(&STARTSVR) TYPE(*CHAR) LEN(200) +
+                          VALUE('/QIBM/Userdata/WebSphere/AppServer/V+
+                          7/Express/Profiles/UHS/bin/startServer +
+                          UHS -profileName UHS')
+             /*                                                  */
+             /********************************/
+             /* Bring down www.UHS.com server*/
+             /********************************/
+             IF         COND(&ACTION = 'STOP ' | &ACTION = 'RSTRT') +
+                          THEN(DO)
+                 /* Bring down the appserver */
+                 QSH        CMD(&STOPSVR)
+
+
+                 /* Bring down the HTTP Server   */
+                 ENDTCPSVR  SERVER(*HTTP) HTTPSVR(UHS)
+                 MONMSG     MSGID(TCP1A77)
+             ENDDO
+
+             /********************************/
+             /* Bring up UHS.com server      */
+             /********************************/
+
+             IF         COND(&ACTION = 'START' | &ACTION = 'RSTRT') +
+                          THEN(DO)
+
+                 /* START THE WEBSPHERE SUBSYSTEM    */
+                 STRSBS     SBSD(QWAS7/QWAS7)
+                 /* CHECK TO SEE IF THE SUBSYSTEM IS ALREADY RUNNING */
+                 MONMSG     MSGID(CPF1010)
+
+                 /* BRING UP THE WAS SERVER */
+                 QSH        CMD(&STARTSVR)
+
+                 /* Bring up the production HTTP Server */
+                 STRTCPSVR  SERVER(*HTTP) HTTPSVR(UHS)
+                 MONMSG     MSGID(TCP7410)
+				 MONMSG     MSGID(TCP1A77)
+             ENDDO
+
+             ENDPGM
+

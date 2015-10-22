@@ -1,0 +1,375 @@
+/**************************************************************/
+/* PROGRAM:     CHKSBS3OF4                                    */
+/* AUTHOR:      MARK MAYER                                    */
+/* DATE:        OCTOBER 7TH 2014                              */
+/* DESCRIPTION: CHECKS SUBSYSTEM STATUS, IF THE SBS IS        */
+/*              STOPPED THEN SEND MESSAGE TO ADMIN            */
+/* ************************************************************/
+
+PGM
+
+DCLF       FILE(LANSAWEBF)  OPNID(LANSAWEBF)
+DCLF       FILE(ALDONDMIF) OPNID(ALDONDMIF)
+DCLF       FILE(Q1ABRMNETF) OPNID(Q1ABRMNETF)
+DCLF       FILE(QWAS7F)    OPNID(QWAS7F)
+DCLF       FILE(QWAS61F)    OPNID(QWAS61F)
+
+DCL        VAR(&STATUS)     TYPE(*CHAR) LEN(8)
+DCL        VAR(&ACTIVE)     TYPE(*CHAR) LEN(6)   VALUE('Active')
+DCL        VAR(&INACTIVE)   TYPE(*CHAR) LEN(8)   VALUE('Inactive')
+DCL        VAR(&SYSNAME)    TYPE(*CHAR) LEN(8)
+
+RTVNETA    SYSNAME(&SYSNAME)                          /* Search for system name */
+
+/**************************************************************************************************/
+/*START SBS QUERY*/
+LANSAWEBF:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+MONMSG     MSGID(CPF3303)                             /* Monitor for non existent file */
+MONMSG     MSGID(CPF3309)
+DSPSBSD    SBSD(DCXCOMLIB/LANSAWEB) OUTPUT(*PRINT)           /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(LANSAWEBF)             /* Copy spool file to DB file */
+
+LANSAWEBR:
+RCVF       OPNID(LANSAWEBF)
+MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ALDONDMIF)) /* Monitor for empty file */
+
+CHGVAR     VAR(&STATUS) VALUE(%SST(&LANSAWEBF_LANSAWEBF 83 8))    /* Check for SBS being Inactive */
+
+IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
+
+/* Start send message block */
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('6122467471@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('7633817665@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('6122465321@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS LANSAWEB inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */          /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('9527377613@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS LANSAWEB inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */         /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS LANSAWEB inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+/* End send message block */
+
+               GOTO CMDLBL(ALDONDMIF)                  /* Go to next sub routine */
+ENDDO
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+               GOTO CMDLBL(ALDONDMIF)
+ENDDO
+ELSE CMD(DO)
+           GOTO CMDLBL(LANSAWEBR)                       /* Else go back to continue reading file */
+ENDDO
+/**************************************************************************************************/
+/*START SBS QUERY*/
+ALDONDMIF:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+DSPSBSD    SBSD(ACMSRCTL/ALDONDMI) OUTPUT(*PRINT)          /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(ALDONDMIF)            /* Copy spool file to DB file */
+
+ALDONDMIR:
+RCVF       OPNID(ALDONDMIF)
+MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(Q1ABRMNETF)) /* Monitor for empty file */
+
+CHGVAR     VAR(&STATUS) VALUE(%SST(&ALDONDMIF_ALDONDMIF 83 8))   /* Check for SBS being Inactive */
+
+IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
+
+/* Start send message block */
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('6122467471@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('7633817665@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('6122465321@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS ALDONDMI inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */          /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('9527377613@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS ALDONDMI inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */         /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS ALDONDMI inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+/* End send Message block */
+
+               GOTO CMDLBL(Q1ABRMNETF)                  /* Go to next sub routine */
+ENDDO
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+               GOTO CMDLBL(Q1ABRMNETF)
+ENDDO
+ELSE CMD(DO)
+           GOTO CMDLBL(ALDONDMIR)                      /* Else go back to continue reading file */
+ENDDO
+/**************************************************************************************************/
+/*START SBS QUERY*/
+Q1ABRMNETF:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+DSPSBSD    SBSD(QBRM/Q1ABRMNET) OUTPUT(*PRINT)          /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(Q1ABRMNETF)            /* Copy spool file to DB file */
+
+Q1ABRMNETR:
+RCVF       OPNID(Q1ABRMNETF)
+MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(QWAS7F))    /* Monitor for empty file */
+
+CHGVAR     VAR(&STATUS) VALUE(%SST(&Q1ABRMNETF_Q1ABRMNETF 83 8))   /* Check for SBS being Inactive */
+
+IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
+
+/* Start send message block */
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('6122467471@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('7633817665@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('6122465321@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS Q1ABRMNET inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */          /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('9527377613@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS Q1ABRMNET inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */         /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS Q1ABRMNET inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+/* End send message block */
+
+               GOTO CMDLBL(QWAS7F)                     /* Go to next sub routine */
+ENDDO
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+               GOTO CMDLBL(QWAS7F)
+ENDDO
+ELSE CMD(DO)
+           GOTO CMDLBL(Q1ABRMNETR)                      /* Else go back to continue reading file */
+ENDDO
+/**************************************************************************************************/
+/*START SBS QUERY*/
+QWAS7F:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+DSPSBSD    SBSD(QWAS7/QWAS7) OUTPUT(*PRINT)             /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(QWAS7F)               /* Copy spool file to DB file */
+
+QWAS7R:
+RCVF       OPNID(QWAS7F)
+MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(QWAS61F))    /* Monitor for empty file */
+
+CHGVAR     VAR(&STATUS) VALUE(%SST(&QWAS7F_QWAS7F 83 8))      /* Check for SBS being Inactive */
+
+IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
+
+/* Start send message block */
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('6122467471@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('7633817665@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('6122465321@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS QWAS7 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */          /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('9527377613@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS QWAS7 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */         /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS7 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+/* End send message block */
+
+               GOTO CMDLBL(QWAS61F)                     /* Go to next sub routine */
+ENDDO
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+               GOTO CMDLBL(QWAS61F)
+ENDDO
+ELSE CMD(DO)
+           GOTO CMDLBL(QWAS7R)                         /* Else go back to continue reading file */
+ENDDO
+/**************************************************************************************************/
+/*START SBS QUERY*/
+QWAS61F:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+DSPSBSD    SBSD(QWAS61/QWAS61) OUTPUT(*PRINT)             /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(QWAS61F)               /* Copy spool file to DB file */
+
+QWAS61R:
+RCVF       OPNID(QWAS61F)
+MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))   /* Monitor for empty file */
+
+CHGVAR     VAR(&STATUS) VALUE(%SST(&QWAS61F_QWAS61F 83 8))      /* Check for SBS being Inactive */
+
+IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
+
+/* Start send message block */
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('6122467471@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) +
+             TOINTNET(('7633817665@vtext.com')) +
+             DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('6122465321@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS QWAS61 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */          /* Global */
+
+/*  SNDDST     TYPE(*LMSG) +
+                   TOINTNET(('9527377613@vtext.com')) +
+                   DSTD('SBS inactive on ' *CAT &SYSNAME) LONGMSG('+
+                   SBS QWAS61 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME)
+MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */         /* Global */
+
+/*  SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('SBS inactive on ' *CAT &SYSNAME) +
+             LONGMSG('+
+             SBS QWAS61 inactive on ' *CAT &SYSNAME) */
+/*  MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */           /* Global */
+/* End send message block */
+
+               GOTO CMDLBL(ENDPGM)                    /* Go to next sub routine */
+ENDDO
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+               GOTO CMDLBL(ENDPGM)
+ENDDO
+ELSE CMD(DO)
+           GOTO CMDLBL(QWAS61R)                         /* Else go back to continue reading file */
+ENDDO
+/**************************************************************************************************/
+ENDPGM:
+DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
+ENDPGM
+

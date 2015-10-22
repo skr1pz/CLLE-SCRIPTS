@@ -1,0 +1,61 @@
+             /****************************************************/
+             /* PROGRAM: WSJ703                                  */
+             /* AUTHOR: JIM VAN SOEST                            */
+             /* DATE: MARCH 21, 2012                             */
+             /* DESCRIPTION:                                     */
+             /* COMMANDS TO SHUT DOWN THE UHS TRAINING WEBSITE   */
+             /* CORRECTLY.                                       */
+             /****************************************************/
+             /* MAINTENANCE HISTORY:                             */
+             /*                                                  */
+             /****************************************************/
+             /****************************************************/
+             /*                                                  */
+             /* PARAMETER OPTIONS:                               */
+             /* START - START THE SERVER, SHOULD AREADY BE       */
+             /*         STOPPED                                  */
+             /* STOP  - STOP THE SERVER, SHOULD BE RUNNING       */
+             /* RSTRT - RESTART THE SERVER.  STOP IT AND THEN    */
+             /*         START IT.                                */
+             /*                                                  */
+             /****************************************************/
+             PGM        PARM(&ACTION)
+             DCL        VAR(&ACTION)  TYPE(*CHAR) LEN(5)
+             DCL        VAR(&STOPSVR) TYPE(*CHAR) LEN(200) +
+                          VALUE('/QIBM/UserData/WebSphere/AppServer/V+
+                          7/Express/profiles/UHSTraining/bin/stopServer +
+                          UHSTraining -profileName UHSTraining +
+                          -username wpsadmin -password wpsadmin')
+             DCL        VAR(&STARTSVR) TYPE(*CHAR) LEN(200) +
+                          VALUE('/QIBM/UserData/WebSphere/AppServer/V+
+                          7/Express/profiles/UHSTraining/bin/startServer +
+                          UHSTraining -profileName UHSTraining')
+             /*                                                  */
+             IF         COND(&ACTION = 'STOP ' | &ACTION = 'RSTRT') +
+                          THEN(DO)
+
+                 /* Bring down the appserver */
+                 QSH        CMD(&STOPSVR)
+
+
+                 /* Bring down the HTTP Server   */
+                 ENDTCPSVR  SERVER(*HTTP) HTTPSVR(UHSTRAIN)
+                 MONMSG     MSGID(TCP1A77)
+             ENDDO
+             IF         COND(&ACTION = 'START' | &ACTION = 'RSTRT') +
+                          THEN(DO)
+               /* START THE WEBSPHERE SUBSYSTEM    */
+               STRSBS     SBSD(QWAS7/QWAS7)
+               /* CHECK TO SEE IF THE SUBSYSTEM IS ALREADY RUNNING */
+               MONMSG     MSGID(CPF1010)
+
+               /* Bring up the WAS server */
+               QSH        CMD(&STARTSVR)
+
+               /* Bring up the production HTTP Server */
+               STRTCPSVR  SERVER(*HTTP) HTTPSVR(UHSTRAIN)
+               MONMSG     MSGID(TCP7410)
+
+             ENDDO
+             ENDPGM
+
