@@ -1,0 +1,61 @@
+/************************************************************/                             
+/* PROGRAM:     WS11000                                     */                             
+/* AUTHOR:      MARK MAYER                                  */                             
+/* DATE:        SEPTEMBER 9TH 2014                          */                             
+/* DESCRIPTION: START / STOP OR RESTART CHARTER_DEV AKA 11K */                             
+/* **********************************************************/                             
+/* PARAMETER OPTIONS:                                       */                             
+/* START -      START INSTANCE                              */                             
+/* STOP  -      STOP INSTANCE                               */                             
+/* RESTART -    RESTART INSTANCE                            */                             
+/************************************************************/                             
+                                                                                           
+PGM     PARM(&ACTION)                                                                      
+DCL     VAR(&ACTION) TYPE(*CHAR) LEN(7)                                                    
+                                                                                           
+DCL     VAR(&STOP)   TYPE(*CHAR) LEN(200) +                                               
+VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/Profiles/CHARTER_DEV/bin/stopServer + 
+-profileName CHARTER_DEV -username wpsadmin -password wpsadmin')                           
+                                                                                           
+DCL     VAR(&START)  TYPE(*CHAR) LEN(200) +                                                
+VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/Profiles/CHARTER_DEV/bin/startServer + 
+-profileName CHARTER_DEV')                                                                  
+                                                                                            
+/********************/                                                                     
+/**Stop CHARTER_DEV**/                                                                     
+/********************/                                                                     
+                                                                                            
+        /**Stop Application Server**/                                                       
+IF      COND(&ACTION = 'STOP' | &ACTION = 'RESTART') THEN(DO)                              
+                                                                                            
+        QSH     CMD(&STOP)                                                                  
+        MONMSG  MSGID(CPF0000)                                                              
+        MONMSG  MSGID(QSH0005)
+		
+        /**Stop HTTP Server**/                                                              
+        ENDTCPSVR SERVER(*HTTP) HTTPSVR(CHARTER_DEV)                                        
+        MONMSG  MSGID(TCP1A77)                                                              
+ ENDDO                                                                                      
+                                                                                            
+/*********************/ 
+/**Start CHARTER_DEV**/                                        
+/*********************/                                        
+                                                               
+        /**Stop Application Server**/                           
+IF     COND(&ACTION = 'START' | &ACTION = 'RESTART') THEN(DO) 
+                                                               
+        /**Start SubSystem**/                                   
+        STRSBS  SBSD(QWAS7/QWAS7)                               
+        MONMSG  MSGID(CPF1010)                                  
+                                                               
+        /**Start Application Server**/                          
+        QSH     CMD(&START)                                     
+        MONMSG  MSGID(CPF0000)                                  
+        MONMSG  MSGID(QSH0005)
+		 
+        /**Start HTTP Server**/                                 
+        STRTCPSVR  SERVER(*HTTP) HTTPSVR(CHARTER_DEV)           
+        MONMSG     MSGID(TCP7410)                               
+ENDDO                                                          
+                                                               
+ENDPGM                                                         
