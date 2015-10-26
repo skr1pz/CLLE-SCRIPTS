@@ -1,0 +1,19 @@
+ /*******************************************************************************************/
+ /* PROGRAM:     UHSEMPCPY                                                                  */
+ /* AUTHOR:      MARK MAYER                                                                 */
+ /* DATE:        JULY 10TH 2015                                                             */
+ /* DESCRIPTION: COPIES CSV FROM WORKDAY DIR TO SPECIFIED FOLDER FOR ACTIVE DIRECTORY PARSE */
+ /*******************************************************************************************/
+
+ PGM
+ DCL   VAR(&SOURCE) TYPE(*CHAR) LEN(35) +
+ VALUE('/vendors/workday/UHSEMPS.csv')
+
+ DCL   VAR(&TARGET) TYPE(*CHAR) LEN(35) +
+ VALUE('/home/MDMAYER01/UHSEMPS.csv')
+
+ CPY OBJ(&SOURCE) TOOBJ(&TARGET) REPLACE(*YES)
+ MONMSG MSGID(CPFA082)
+
+ ENDPGM
+

@@ -1,0 +1,82 @@
+/************************************************************/
+/* PROGRAM:     WS17000                                     */
+/* AUTHOR:      MARK MAYER                                  */
+/* DATE:        SEPTEMBER 22ND 2014                         */
+/* DESCRIPTION: START / STOP OR RESTART MyUHSDev2 AKA 11K   */
+/* **********************************************************/
+/* PARAMETER OPTIONS:                                       */
+/* START -      START INSTANCE                              */
+/* STOP  -      STOP INSTANCE                               */
+/* RESTART -    RESTART INSTANCE                            */
+/* QUICK -      RESTARTS JUST THE APPLICAITON SERVER        */
+/************************************************************/
+
+ PGM     PARM(&ACTION)
+ DCL     VAR(&ACTION) TYPE(*CHAR) LEN(7)
+
+ DCL     VAR(&STOP)   TYPE(*CHAR) LEN(200) +
+ VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/Profiles/MyUHSDev2/bin/stopServer +
+ -profileName MyUHSDev2 -username ?????? -password ??????')
+
+ DCL     VAR(&START)  TYPE(*CHAR) LEN(200) +
+ VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/Profiles/MyUHSDev2/bin/startServer +
+ -profileName MyUHSDev2')
+
+ /****************/
+ /**QUICK BOUNCE**/
+ /****************/
+
+ IF     COND(&ACTION = 'QUICK') THEN(DO)
+
+        /***STOP APPLICAITON SERVER***/
+        QSH     CMD(&STOP)
+        MONMSG  MSGID(CPF0000)
+        MONMSG  MSGID(QSH0005)
+
+        /***START APPLICAITON SERVER***/
+        QSH     CMD(&START)
+        MONMSG  MSGID(CPF0000)
+        MONMSG  MSGID(QSH0005)
+ ENDDO
+
+ /******************/
+ /**Stop MyUHSDev2**/
+ /******************/
+
+         /**Stop Application Server**/
+ IF      COND(&ACTION = 'STOP' | &ACTION = 'RESTART') THEN(DO)
+
+         QSH     CMD(&STOP)
+         MONMSG  MSGID(CPF0000)
+         MONMSG  MSGID(QSH0005)
+
+         /**Stop HTTP Server**/
+         ENDTCPSVR SERVER(*HTTP) HTTPSVR(MyUHSDev2)
+         MONMSG  MSGID(TCP1A77)
+  ENDDO
+
+ /*******************/
+ /**Start MyUHSDev2**/
+ /*******************/
+
+         /**Stop Application Server**/
+ IF     COND(&ACTION = 'START' | &ACTION = 'RESTART') THEN(DO)
+
+         /**Start SubSystem**/
+         STRSBS  SBSD(QWAS7/QWAS7)
+         MONMSG  MSGID(CPF1010)
+
+         /**Start Application Server**/
+         QSH     CMD(&START)
+         MONMSG  MSGID(CPF0000)
+         MONMSG  MSGID(QSH0005)
+
+         /**Start HTTP Server**/
+         STRTCPSVR  SERVER(*HTTP) HTTPSVR(MyUHSDev2)
+         MONMSG     MSGID(TCP7410)
+         MONMSG     MSGID(TCP1A77)
+ ENDDO
+
+ ENDPGM
+
+

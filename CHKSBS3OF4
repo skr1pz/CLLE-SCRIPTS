@@ -9,9 +9,9 @@
 PGM
 
 DCLF       FILE(LANSAWEBF)  OPNID(LANSAWEBF)
-DCLF       FILE(ALDONDMIF) OPNID(ALDONDMIF)
+DCLF       FILE(ALDONDMIF)  OPNID(ALDONDMIF)
 DCLF       FILE(Q1ABRMNETF) OPNID(Q1ABRMNETF)
-DCLF       FILE(QWAS7F)    OPNID(QWAS7F)
+DCLF       FILE(QWAS7F)     OPNID(QWAS7F)
 DCLF       FILE(QWAS61F)    OPNID(QWAS61F)
 
 DCL        VAR(&STATUS)     TYPE(*CHAR) LEN(8)
@@ -27,8 +27,8 @@ LANSAWEBF:
 DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
 MONMSG     MSGID(CPF3303)                             /* Monitor for non existent file */
 MONMSG     MSGID(CPF3309)
-DSPSBSD    SBSD(DCXCOMLIB/LANSAWEB) OUTPUT(*PRINT)           /* Print subsystem decription spool file */
-CPYSPLF    FILE(QPRTSBSD) TOFILE(LANSAWEBF)             /* Copy spool file to DB file */
+DSPSBSD    SBSD(DCXCOMLIB/LANSAWEB) OUTPUT(*PRINT)    /* Print subsystem decription spool file */
+CPYSPLF    FILE(QPRTSBSD) TOFILE(LANSAWEBF)           /* Copy spool file to DB file */
 
 LANSAWEBR:
 RCVF       OPNID(LANSAWEBF)
@@ -86,17 +86,17 @@ MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
 
                GOTO CMDLBL(ALDONDMIF)                  /* Go to next sub routine */
 ENDDO
-IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)         /* If status is active go to next sub rou.*/
+IF         COND(&STATUS *EQ &ACTIVE) THEN(DO)          /* If status is active go to next sub rou.*/
                GOTO CMDLBL(ALDONDMIF)
 ENDDO
 ELSE CMD(DO)
-           GOTO CMDLBL(LANSAWEBR)                       /* Else go back to continue reading file */
+           GOTO CMDLBL(LANSAWEBR)                      /* Else go back to continue reading file */
 ENDDO
 /**************************************************************************************************/
 /*START SBS QUERY*/
 ALDONDMIF:
-DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
-DSPSBSD    SBSD(ACMSRCTL/ALDONDMI) OUTPUT(*PRINT)          /* Print subsystem decription spool file */
+DLTSPLF    FILE(QPRTSBSD)                               /* Delete spool file */
+DSPSBSD    SBSD(ACMSRCTL/ALDONDMI) OUTPUT(*PRINT)       /* Print subsystem decription spool file */
 CPYSPLF    FILE(QPRTSBSD) TOFILE(ALDONDMIF)            /* Copy spool file to DB file */
 
 ALDONDMIR:
@@ -172,7 +172,7 @@ Q1ABRMNETR:
 RCVF       OPNID(Q1ABRMNETF)
 MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(QWAS7F))    /* Monitor for empty file */
 
-CHGVAR     VAR(&STATUS) VALUE(%SST(&Q1ABRMNETF_Q1ABRMNETF 83 8))   /* Check for SBS being Inactive */
+CHGVAR     VAR(&STATUS) VALUE(%SST(&Q1ABRMNETF_Q1ABRMNETF 83 8))  /* Check for SBS being Inactive */
 
 IF         COND(&STATUS *EQ &INACTIVE) THEN(DO)       /* If status is inactive then start sbs */
 
@@ -303,7 +303,7 @@ ENDDO
 /*START SBS QUERY*/
 QWAS61F:
 DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
-DSPSBSD    SBSD(QWAS61/QWAS61) OUTPUT(*PRINT)             /* Print subsystem decription spool file */
+DSPSBSD    SBSD(QWAS61/QWAS61) OUTPUT(*PRINT)           /* Print subsystem decription spool file */
 CPYSPLF    FILE(QPRTSBSD) TOFILE(QWAS61F)               /* Copy spool file to DB file */
 
 QWAS61R:

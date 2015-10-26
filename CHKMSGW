@@ -1,0 +1,117 @@
+             PGM
+
+              /* Program to monitor for MSGW, written by Mark Mayer and Ronald Vetsch 20140530 */
+
+             DCLF       FILE(CHKSPOOL)
+
+             DCL        VAR(&STATUS)     TYPE(*CHAR) LEN(4)
+             DCL        VAR(&WAIT)       TYPE(*CHAR) LEN(4)   VALUE('MSGW')
+             DCL        VAR(&JOBNAME)    TYPE(*CHAR) LEN(10)
+             DCL        VAR(&LPRT0)      TYPE(*CHAR) LEN(5)   VALUE('LPRT0')
+             DCL        VAR(&LPRT4)      TYPE(*CHAR) LEN(5)   VALUE('LPRT4')
+             DCL        VAR(&ROBOT)      TYPE(*CHAR) LEN(5)   VALUE('ROBOT')
+             DCL        VAR(&ROBOTREACT) TYPE(*CHAR) LEN(10)  VALUE('ROBOTREACT')
+             DCL        VAR(&USER)       TYPE(*CHAR) LEN(10)
+             DCL        VAR(&JOBNUMBER)  TYPE(*CHAR) LEN(6)
+             DCL        VAR(&SYSNAME)    TYPE(*CHAR) LEN(8)
+             DCL        VAR(&PRINTSBS)   TYPE(*CHAR) LEN(4)   VALUE('QSPL')
+             DCL        VAR(&PRINT)      TYPE(*CHAR) LEN(10)
+             DCL        VAR(&PRTLINE)    TYPE(*CHAR) LEN(56)
+
+             RTVNETA    SYSNAME(&SYSNAME)
+
+              WRKACTJOB  OUTPUT(*PRINT)
+              DLTSPLF    FILE(QPDSPAJB)
+              DLYJOB     DLY(30)
+
+              WRKACTJOB  OUTPUT(*PRINT)
+
+              CPYSPLF    FILE(QPDSPAJB) TOFILE(CHKSPOOL)
+
+ LOOP1:       RCVF
+              MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              CHGVAR     VAR(&PRINT) VALUE(%SST(&CHKSPOOL 2 10))
+              IF         COND(&PRINTSBS *EQ &PRINT) THEN(GOTO CMDLBL(LOOP1)) /*read if printer sbs*/
+
+              CHGVAR     VAR(&STATUS) VALUE(%SST(&CHKSPOOL 116 4))
+              IF         COND(&WAIT *NE &STATUS) THEN(GOTO CMDLBL(LOOP1)) /*read file if STATUS is +
+                                                                            not 'MSGW'*/
+              CHGVAR     VAR(&STATUS) VALUE(%SST(&CHKSPOOL 116 4))
+              IF         COND(&WAIT *EQ &STATUS) THEN(GOTO CMDLBL(SENDMSG)) /*send message if +
+                                                                             there's a match */
+
+
+
+SENDMSG:     CHGVAR     VAR(&JOBNAME) VALUE(%SST(&CHKSPOOL 4 10))
+          /* IF         COND(&JOBNAME *EQ &ROBOTREACT) THEN(           */
+          /*              &LPRT0 || &LPRT4) THEN(GOTO CMDLBL(LOOP1))   */
+             IF         COND(&JOBNAME *EQ &ROBOT) THEN(GOTO CMDLBL(LOOP1))
+             IF         COND(&JOBNAME *EQ &ROBOTREACT) THEN(GOTO CMDLBL(LOOP1))
+             CHGVAR     VAR(&USER) VALUE(%SST(&CHKSPOOL 17 10))
+             CHGVAR     VAR(&JOBNUMBER) VALUE(%SST(&CHKSPOOL 29 6))
+
+              CHGVAR     VAR(&PRTLINE) VALUE(&JOBNUMBER *CAT '/' +
+                         *CAT &USER *TCAT '/' *CAT &JOBNAME)  /* Concatenates the variables */
+
+
+              /* SNDMSG     MSG('Check for MSGW for job ' *CAT &JOBNUMBER *BCAT &USER +
+              *BCAT &JOBNAME) TOMSGQ(MDMAYER01) */
+
+              /* MONMSG     MSGID(CPA0000 CPC0000 CPF0000) */
+
+              /* GOTO CMDLBL(LOOP1) */
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122467471@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('7633817665@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122465321@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)        */  /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('9527377613@vtext.com')) +
+                           DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)        */  /* Global */
+
+
+
+              SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+              SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE)
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE) */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)         */ /* Global */
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) DSTD('MSGW on ' *CAT &SYSNAME) +
+                           LONGMSG('+
+                           Check on MSGW for job ' *CAT &PRTLINE) */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)         */ /* Global */
+
+
+              GOTO CMDLBL(LOOP1)
+
+
+  ENDPGM:     DLTSPLF    FILE(QPDSPAJB) /* Delete Spool file */
+              ENDPGM
+

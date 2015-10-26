@@ -1,0 +1,63 @@
+/**************************************************************/
+/* PROGRAM:     WSINMOTION                                    */
+/* AUTHOR:      MARK MAYER                                    */
+/* DATE:        SEPTEMBER 12TH 2014                           */
+/* DESCRIPTION: START / STOP OR RESTART WASPRD1a AKA inMotion */
+/* ************************************************************/
+/* PARAMETER OPTIONS:                                         */
+/* START -      START INSTANCE                                */
+/* STOP  -      STOP INSTANCE                                 */
+/* RESTART -    RESTART INSTANCE                              */
+/**************************************************************/
+
+PGM     PARM(&ACTION)
+DCL     VAR(&ACTION) TYPE(*CHAR) LEN(7)
+
+DCL     VAR(&STOP)   TYPE(*CHAR) LEN(200) +
+VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/profiles/WASPRD1a/bin/stopServer +
+-profileName WASPRD1a -username ?????? -password ??????')
+
+DCL     VAR(&START)  TYPE(*CHAR) LEN(200) +
+VALUE('/QIBM/UserData/WebSphere/AppServer/V7/Express/profiles/WASPRD1a/bin/startServer +
+-profileName WASPRD1a')
+
+ /*****************/
+ /**STOP WASPRD1a**/
+ /*****************/
+
+        /**STOP APPLICATION SERVER**/
+ IF         COND(&ACTION = 'STOP' | &ACTION = 'RESTART') THEN(DO)
+
+        QSH     CMD(&STOP)
+        MONMSG  MSGID(CPF0000)
+        MONMSG  MSGID(QSH0005)
+
+        /**STOP HTTP SERVER**/
+        ENDTCPSVR SERVER(*HTTP) HTTPSVR(WASPRD1A)
+        MONMSG  MSGID(TCP1A77)
+ ENDDO
+
+/******************/
+/**START WASPRD1a**/
+/******************/
+
+       /**STOP APPLICATION SERVER**/
+IF     COND(&ACTION = 'START' | &ACTION = 'RESTART') THEN(DO)
+
+       /**START SUBSYSTEM**/
+       STRSBS  SBSD(QWAS7/QWAS7)
+       MONMSG  MSGID(CPF1010)
+
+       /**START APPLICATION SERVER**/
+       QSH     CMD(&START)
+       MONMSG  MSGID(CPF0000)
+       MONMSG  MSGID(QSH0005)
+
+       /**START HTTP SERVER**/
+       STRTCPSVR  SERVER(*HTTP) HTTPSVR(WASPRD1A)
+       MONMSG     MSGID(TCP7410)
+       MONMSG     MSGID(TCP1A77)
+ENDDO
+
+ENDPGM
+

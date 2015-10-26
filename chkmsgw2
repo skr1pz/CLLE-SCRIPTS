@@ -91,7 +91,7 @@ SENDMSG:     CHGVAR     VAR(&JOBNAME) VALUE(%SST(&CHKSPOOLZ 4 10))      /* Grab 
                            TOINTNET(('6122467471@vtext.com')) +
                            DSTD('MSGW on ' *CAT &SYSNAME) LONGMSG('+
                            Check on MSGW for job ' *CAT &PRTLINE)
-              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)            /* Global */
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)           /* Global */
 
               SNDDST     TYPE(*LMSG) +
                            TOINTNET(('7633817665@vtext.com')) +

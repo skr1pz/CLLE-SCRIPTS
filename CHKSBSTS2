@@ -1,9 +1,9 @@
 /**************************************************************/
-/* PROGRAM:     CHKSBS1OF4                                    */
+/* PROGRAM:     CHECKSBS                                      */
 /* AUTHOR:      MARK MAYER                                    */
-/* DATE:        OCTOBER 7TH 2014                              */
+/* DATE:        SEPTEMBER 24TH 2014                           */
 /* DESCRIPTION: CHECKS SUBSYSTEM STATUS, IF THE SBS IS        */
-/*              STOPPED THEN SEND MESSAGE TO ADMIN            */
+/*              STOPPED THEN START THE SUBSYSTEM              */
 /* ************************************************************/
 
 PGM
@@ -26,7 +26,6 @@ RTVNETA    SYSNAME(&SYSNAME)                          /* Search for system name 
 QINTERF:
 DLTSPLF    FILE(QPRTSBSD)                             /* Delete spool file */
 MONMSG     MSGID(CPF3303)                             /* Monitor for non existent file */
-MONMSG     MSGID(CPF3309)
 DSPSBSD    SBSD(QSYS/QINTER) OUTPUT(*PRINT)           /* Print subsystem decription spool file */
 CPYSPLF    FILE(QPRTSBSD) TOFILE(QINTERF)             /* Copy spool file to DB file */
 

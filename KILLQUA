@@ -1,0 +1,46 @@
+/************************************************************/
+/* PROGRAM:     KILLQUA                                     */
+/* AUTHOR:      MARK MAYER                                  */
+/* DATE:        OCTOBER 22nd 2014                           */
+/* DESCRIPTION: KILLS MYUHSTEST (16K) WEBSPHERE VIA PID     */
+/* **********************************************************/
+
+PGM
+
+DCL     VAR(&KILL)   TYPE(*CHAR) LEN(200) +
+VALUE('ps -u qejbsvr | grep myuhstest | awk 'length($1) == 7 { print $1 }'')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

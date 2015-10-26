@@ -1,0 +1,125 @@
+             PGM
+
+             /* Program to monitor job queue, written by Mark Mayer and Ronald Vetsch 20140530 */
+
+             DCLF       FILE(CHKSPOOLQ)
+
+             DCL        VAR(&JOBDIGIT)  TYPE(*CHAR) LEN(3)
+             DCL        VAR(&JOBONE)    TYPE(*CHAR) LEN(3)  VALUE('1')
+             DCL        VAR(&JOBTEN)    TYPE(*CHAR) LEN(3)  VALUE('2')
+             DCL        VAR(&JOBHUN)    TYPE(*CHAR) LEN(3)  VALUE('1')
+             DCL        VAR(&JOBCONST1) TYPE(*CHAR) LEN(3)
+             DCL        VAR(&JOBCONST2) TYPE(*CHAR) LEN(3)
+             DCL        VAR(&JOBCONST3) TYPE(*CHAR) LEN(3)
+             DCL        VAR(&QUEUE)     TYPE(*CHAR) LEN(10)
+             DCL        VAR(&SYSNAME)   TYPE(*CHAR) LEN(8)
+
+             RTVNETA    SYSNAME(&SYSNAME)
+
+             WRKJOBQ    OUTPUT(*PRINT)
+             DLTSPLF    FILE(QPRTSPLQ)
+             DLYJOB     DLY(15)
+
+             WRKJOBQ    OUTPUT(*PRINT)
+
+             CPYSPLF    FILE(QPRTSPLQ) TOFILE(CHKSPOOLQ)
+
+LOOP1:       RCVF
+             MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ENDPGM))
+
+              CHGVAR     VAR(&JOBCONST3) VALUE(%SST(&CHKSPOOLQ 31 1))
+              IF         COND(&JOBCONST3 *GE &JOBHUN) THEN(GOTO CMDLBL(SENDMSG))  /*Check for 100*/
+
+              CHGVAR     VAR(&JOBCONST2) VALUE(%SST(&CHKSPOOLQ 32 1))
+              IF         COND(&JOBCONST2 *GE &JOBTEN) THEN(GOTO CMDLBL(SENDMSG))  /*Check for 10 */
+
+              GOTO CMDLBL(LOOP1) /* Remove when using a single digit threshold */
+
+              CHGVAR     VAR(&JOBCONST1) VALUE(%SST(&CHKSPOOLQ 33 1))
+              IF         COND(&JOBCONST1 *GE &JOBONE) THEN(GOTO CMDLBL(SENDMSG)) /*Check for +
+                                                                                   single */
+              CHGVAR     VAR(&JOBCONST1) VALUE(%SST(&CHKSPOOLQ 33 1))
+              IF         COND(&JOBCONST1 *LT &JOBONE) THEN(GOTO +
+                         CMDLBL(LOOP1))
+
+
+
+
+ SENDMSG:     CHGVAR     VAR(&QUEUE) VALUE(%SST(&CHKSPOOLQ 2 10))
+              CHGVAR     VAR(&JOBDIGIT) VALUE(%SST(&CHKSPOOLQ 31 3))
+        /*    SNDMSG     MSG('Check job queue for jam on ' *CAT &QUEUE *BCAT 'of ' *CAT +  */
+        /*    &JOBDIGIT *BCAT 'jobs.') TOMSGQ(MDMAYER01)                                   */
+
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)                                    */
+
+        /*    GOTO CMDLBL(LOOP1)                                                           */
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122467471@vtext.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)
+
+              SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('7633817665@vtext.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('6122465321@vtext.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')                                     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)                       */
+
+        /*    SNDDST     TYPE(*LMSG) +
+                           TOINTNET(('9527377613@vtext.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')                                     */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)                       */
+
+
+              SNDDST     TYPE(*LMSG) TOINTNET(('MDMayer@uhs.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)
+
+             SNDDST     TYPE(*LMSG) TOINTNET(('RAVetsch@uhs.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')
+              MONMSG     MSGID(CPA0000 CPC0000 CPF0000)
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('SCScholl@uhs.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')                                 */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)                   */
+
+        /*    SNDDST     TYPE(*LMSG) TOINTNET(('JJFecht@uhs.com')) +
+                           DSTD('JOBQ on ' *CAT &SYSNAME) +
+                           LONGMSG('Check job queue for jam on ' +
+                           *CAT &QUEUE *BCAT 'of' *BCAT &JOBDIGIT +
+                           *BCAT 'jobs.')                                 */
+        /*    MONMSG     MSGID(CPA0000 CPC0000 CPF0000)                   */
+
+
+              GOTO CMDLBL(LOOP1)
+
+
+
+  ENDPGM:     DLTSPLF    FILE(QPRTSPLQ) /* Delete Spool file */
+              ENDPGM
+
